@@ -194,15 +194,19 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                             f.write(('%g ' * len(line)).rstrip() % line + '\n')
 
                     if save_img or save_crop or view_img:  # Add bbox to image
-                        c = int(cls)  # integer class
-                        label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
-                        if draw_frame:
-                            annotator.box_label(xyxy, label, color=colors(c, True))
                         if draw_outside and not draw_inside:
                             annotator.rectangle(xyxy, fill=fg_color)
                         if not draw_outside and draw_inside:
                             p1_x, p1_y, p2_x, p2_y = int(xyxy[0]), int(xyxy[1]), int(xyxy[2]), int(xyxy[3])
                             im0[p1_y:p2_y, p1_x:p2_x] = im0s[p1_y:p2_y, p1_x:p2_x]
+
+                # Draw frame over everything
+                for *xyxy, conf, cls in reversed(det):
+                    if save_img or save_crop or view_img:  # Add bbox to image
+                        c = int(cls)  # integer class
+                        label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
+                        if draw_frame:
+                            annotator.box_label(xyxy, label, color=colors(c, True))
 
                         if save_crop:
                             save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
