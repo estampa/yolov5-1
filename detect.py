@@ -76,6 +76,7 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         half=False,  # use FP16 half-precision inference
         dnn=False,  # use OpenCV DNN for ONNX inference
         bg_color=None,  # set a flat background color
+        transparent=False,  # set a transparent background
         ):
     source = str(source)
     save_img = not nosave and not source.endswith('.txt')  # save inference images
@@ -112,7 +113,7 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
     vid_path, vid_writer = [None] * bs, [None] * bs
 
     # Estampa settings
-    bg_original = not opt.bg_color
+    bg_original = not opt.bg_color and not transparent
 
     # Run inference
     model.warmup(imgsz=(1 if pt else bs, 3, *imgsz), half=half)  # warmup
@@ -150,17 +151,23 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                 p, im0, frame = path, im0s.copy(), getattr(dataset, 'frame', 0)
             else:  # flat or transparent background
                 p, frame = path, getattr(dataset, 'frame', 0)
-                im0 = np.zeros(im0s.shape, np.uint8)
-                bg_color = [int(bg_color[i:i+2], 16) for i in (0, 2, 4)]
-                im0[:, :] = bg_color
+                if bg_color:
+                    im0 = np.zeros(im0s.shape, np.uint8)
+                    bg_color = [int(bg_color[i:i+2], 16) for i in (0, 2, 4)]
+                    im0[:, :] = bg_color
+                else:
+                    im0 = np.zeros([im0s.shape[0], im0s.shape[1], 4], np.uint8)
 
             p = Path(p)  # to Path
-            save_path = str(save_dir / p.name)  # im.jpg
+            if not transparent:
+                save_path = str(save_dir / p.name)  # im.jpg
+            else:
+                save_path = str(save_dir / p.with_suffix('.png').name)
             txt_path = str(save_dir / 'labels' / p.stem) + ('' if dataset.mode == 'image' else f'_{frame}')  # im.txt
             s += '%gx%g ' % im.shape[2:]  # print string
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             imc = im0.copy() if save_crop else im0  # for save_crop
-            annotator = Annotator(im0, line_width=line_thickness, example=str(names))
+            annotator = Annotator(im0, line_width=line_thickness, example=str(names), transparent=transparent)
             if len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_coords(im.shape[2:], det[:, :4], im0.shape).round()
@@ -252,7 +259,8 @@ def parse_opt():
     parser.add_argument('--half', action='store_true', help='use FP16 half-precision inference')
     parser.add_argument('--dnn', action='store_true', help='use OpenCV DNN for ONNX inference')
 
-    parser.add_argument('--bg_color', type=str, default=None, help='use a flat background color, ex. 000000')
+    parser.add_argument('--bg_color', type=str, default=None, help='set a flat background color, ex. 000000')
+    parser.add_argument('--transparent', action='store_true', help='set a transparent background')
 
     opt = parser.parse_args()
     opt.imgsz *= 2 if len(opt.imgsz) == 1 else 1  # expand
