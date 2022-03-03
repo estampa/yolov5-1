@@ -76,7 +76,9 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         half=False,  # use FP16 half-precision inference
         dnn=False,  # use OpenCV DNN for ONNX inference
         bg_color=None,  # set a flat background color
+        fg_color=None,  # detection color
         transparent=False,  # set a transparent background
+        render='all',  # what to render
         ):
     source = str(source)
     save_img = not nosave and not source.endswith('.txt')  # save inference images
@@ -113,6 +115,9 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
     vid_path, vid_writer = [None] * bs, [None] * bs
 
     # Estampa settings
+    draw_frame = render == 'all' or render == 'frame' or render == 'inside+frame' or render == 'outside+frame'
+    draw_inside = render == 'all' or render == 'inside' or render == 'inside+frame'
+    draw_outside = render == 'all' or render == 'outside' or render == 'outside+frame'
     bg_original = not opt.bg_color and not transparent
 
     # Run inference
@@ -158,6 +163,9 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                 else:
                     im0 = np.zeros([im0s.shape[0], im0s.shape[1], 4], np.uint8)
 
+            if fg_color:
+                fg_color = [int(fg_color[i:i + 2], 16) for i in (0, 2, 4)]
+
             p = Path(p)  # to Path
             if not transparent:
                 save_path = str(save_dir / p.name)  # im.jpg
@@ -188,7 +196,14 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                     if save_img or save_crop or view_img:  # Add bbox to image
                         c = int(cls)  # integer class
                         label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
-                        annotator.box_label(xyxy, label, color=colors(c, True))
+                        if draw_frame:
+                            annotator.box_label(xyxy, label, color=colors(c, True))
+                        if draw_outside and not draw_inside:
+                            annotator.rectangle(xyxy, fill=fg_color)
+                        if not draw_outside and draw_inside:
+                            p1_x, p1_y, p2_x, p2_y = int(xyxy[0]), int(xyxy[1]), int(xyxy[2]), int(xyxy[3])
+                            im0[p1_y:p2_y, p1_x:p2_x] = im0s[p1_y:p2_y, p1_x:p2_x]
+
                         if save_crop:
                             save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
 
@@ -260,7 +275,11 @@ def parse_opt():
     parser.add_argument('--dnn', action='store_true', help='use OpenCV DNN for ONNX inference')
 
     parser.add_argument('--bg_color', type=str, default=None, help='set a flat background color, ex. 000000')
+    parser.add_argument('--fg_color', type=str, default=None, help='set a detection color, ex. 000000')
     parser.add_argument('--transparent', action='store_true', help='set a transparent background')
+    parser.add_argument('--render', type=str, default='all', choices=['all', 'inside', 'outside', 'frame',
+                                                                      'inside+frame', 'outside+frame'],
+                        help='set a flat background color, ex. 000000')
 
     opt = parser.parse_args()
     opt.imgsz *= 2 if len(opt.imgsz) == 1 else 1  # expand

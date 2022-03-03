@@ -84,7 +84,6 @@ class Annotator:
     def box_label(self, box, label='', color=(128, 128, 128), txt_color=(255, 255, 255)):
         if self.transparent:
             color = (*color, 255)
-            print(color)
             txt_color = (*txt_color, 255)
 
         # Add one xyxy box to image with label
@@ -113,7 +112,9 @@ class Annotator:
 
     def rectangle(self, xy, fill=None, outline=None, width=1):
         # Add rectangle to image (PIL-only)
-        self.draw.rectangle(xy, fill, outline, width)
+        # self.draw.rectangle(xy, fill, outline, width)
+        p1, p2 = (int(xy[0]), int(xy[1])), (int(xy[2]), int(xy[3]))
+        cv2.rectangle(self.im, p1, p2, fill, thickness=-1, lineType=cv2.LINE_AA)
 
     def text(self, xy, text, txt_color=(255, 255, 255)):
         # Add text to image (PIL-only)
