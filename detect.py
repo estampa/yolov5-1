@@ -46,6 +46,7 @@ from utils.general import (LOGGER, check_file, check_img_size, check_imshow, che
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, time_sync
 
+import numpy as np
 
 @torch.no_grad()
 def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
@@ -74,6 +75,7 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         hide_conf=False,  # hide confidences
         half=False,  # use FP16 half-precision inference
         dnn=False,  # use OpenCV DNN for ONNX inference
+        bg_color=None,  # set a flat background color
         ):
     source = str(source)
     save_img = not nosave and not source.endswith('.txt')  # save inference images
@@ -109,6 +111,9 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         bs = 1  # batch_size
     vid_path, vid_writer = [None] * bs, [None] * bs
 
+    # Estampa settings
+    bg_original = not opt.bg_color
+
     # Run inference
     model.warmup(imgsz=(1 if pt else bs, 3, *imgsz), half=half)  # warmup
     dt, seen = [0.0, 0.0, 0.0], 0
@@ -141,8 +146,13 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
             if webcam:  # batch_size >= 1
                 p, im0, frame = path[i], im0s[i].copy(), dataset.count
                 s += f'{i}: '
-            else:
+            elif bg_original:
                 p, im0, frame = path, im0s.copy(), getattr(dataset, 'frame', 0)
+            else:  # flat or transparent background
+                p, frame = path, getattr(dataset, 'frame', 0)
+                im0 = np.zeros(im0s.shape, np.uint8)
+                bg_color = [int(bg_color[i:i+2], 16) for i in (0, 2, 4)]
+                im0[:, :] = bg_color
 
             p = Path(p)  # to Path
             save_path = str(save_dir / p.name)  # im.jpg
@@ -241,6 +251,9 @@ def parse_opt():
     parser.add_argument('--hide-conf', default=True, action='store_true', help='hide confidences')
     parser.add_argument('--half', action='store_true', help='use FP16 half-precision inference')
     parser.add_argument('--dnn', action='store_true', help='use OpenCV DNN for ONNX inference')
+
+    parser.add_argument('--bg_color', type=str, default=None, help='use a flat background color, ex. 000000')
+
     opt = parser.parse_args()
     opt.imgsz *= 2 if len(opt.imgsz) == 1 else 1  # expand
     print_args(FILE.stem, opt)
