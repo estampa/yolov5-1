@@ -165,9 +165,9 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                     im0 = np.zeros([im0s.shape[0], im0s.shape[1], 4], np.uint8)
                     bg_color = [0, 0, 0, 0]
 
-            if fg_color and fg_color != 'transparent':
+            if fg_color and fg_color != 'transparent' and fg_color != 'auto':
                 fg_color = [int(fg_color[i:i + 2], 16) for i in (0, 2, 4)]
-            else:
+            elif fg_color == 'transparent':
                 fg_color = [0, 0, 0, 0]
 
             if transparent:
@@ -205,8 +205,15 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                             f.write(('%g ' * len(line)).rstrip() % line + '\n')
 
                     if save_img or save_crop or view_img:  # Add bbox to image
+                        c = int(cls)  # integer class
                         if (draw_outside and not draw_inside) or draw_box:
-                            annotator.rectangle(xyxy, fill=fg_color)
+                            if fg_color == 'auto':
+                                color = colors(c, True)
+                                if transparent:
+                                    color = color(*color, 255)
+                                annotator.rectangle(xyxy, fill=color)
+                            else:
+                                annotator.rectangle(xyxy, fill=fg_color)
                         if not draw_outside and draw_inside:
                             p1_x, p1_y, p2_x, p2_y = int(xyxy[0]), int(xyxy[1]), int(xyxy[2]), int(xyxy[3])
                             im0[p1_y:p2_y, p1_x:p2_x] = im0s[p1_y:p2_y, p1_x:p2_x]
@@ -289,8 +296,8 @@ def parse_opt():
     parser.add_argument('--half', action='store_true', help='use FP16 half-precision inference')
     parser.add_argument('--dnn', action='store_true', help='use OpenCV DNN for ONNX inference')
 
-    parser.add_argument('--bg_color', type=str, default=None, help='set a background color, ex. 000000 o transparent')
-    parser.add_argument('--fg_color', type=str, default=None, help='set a detection color, ex. 000000 or transparent')
+    parser.add_argument('--bg_color', type=str, default=None, help='background color, ex. 000000 o transparent')
+    parser.add_argument('--fg_color', type=str, default=None, help='detection color, ex. 000000, transparent or auto')
     parser.add_argument('--render', type=str, default='all', choices=['all', 'none', 'inside', 'outside', 'frame',
                                                                       'inside+frame', 'outside+frame'],
                         help='set a flat background color, ex. 000000')
