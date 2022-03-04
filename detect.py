@@ -77,7 +77,6 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         dnn=False,  # use OpenCV DNN for ONNX inference
         bg_color=None,  # set a flat background color
         fg_color=None,  # detection color
-        transparent=False,  # set a transparent background
         render='all',  # what to render
         ):
     source = str(source)
@@ -120,6 +119,7 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
     draw_outside = render == 'all' or render == 'outside' or render == 'outside+frame'
     draw_box = render == 'none'
     bg_original = draw_outside
+    transparent = bg_color == 'transparent' or fg_color == 'transparent'
 
     # Run inference
     model.warmup(imgsz=(1 if pt else bs, 3, *imgsz), half=half)  # warmup
@@ -157,15 +157,25 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                 p, im0, frame = path, im0s.copy(), getattr(dataset, 'frame', 0)
             else:  # flat or transparent background
                 p, frame = path, getattr(dataset, 'frame', 0)
-                if bg_color:
+                if bg_color and bg_color != 'transparent':
                     im0 = np.zeros(im0s.shape, np.uint8)
                     bg_color = [int(bg_color[i:i+2], 16) for i in (0, 2, 4)]
                     im0[:, :] = bg_color
                 else:
                     im0 = np.zeros([im0s.shape[0], im0s.shape[1], 4], np.uint8)
+                    bg_color = [0, 0, 0, 0]
 
-            if fg_color:
+            if fg_color and fg_color != 'transparent':
                 fg_color = [int(fg_color[i:i + 2], 16) for i in (0, 2, 4)]
+            else:
+                fg_color = [0, 0, 0, 0]
+
+            if transparent:
+                # Alpha channel
+                if im0s.shape[2] == 3:
+                    im0s = np.dstack((im0s, 255 * np.ones((im0s.shape[0], im0s.shape[1]))))
+                if im0.shape[2] == 3:
+                    im0 = np.dstack((im0, 255 * np.ones((im0.shape[0], im0.shape[1]))))
 
             p = Path(p)  # to Path
             if not transparent:
@@ -279,9 +289,8 @@ def parse_opt():
     parser.add_argument('--half', action='store_true', help='use FP16 half-precision inference')
     parser.add_argument('--dnn', action='store_true', help='use OpenCV DNN for ONNX inference')
 
-    parser.add_argument('--bg_color', type=str, default=None, help='set a flat background color, ex. 000000')
-    parser.add_argument('--fg_color', type=str, default=None, help='set a detection color, ex. 000000')
-    parser.add_argument('--transparent', action='store_true', help='set a transparent background')
+    parser.add_argument('--bg_color', type=str, default=None, help='set a background color, ex. 000000 o transparent')
+    parser.add_argument('--fg_color', type=str, default=None, help='set a detection color, ex. 000000 or transparent')
     parser.add_argument('--render', type=str, default='all', choices=['all', 'none', 'inside', 'outside', 'frame',
                                                                       'inside+frame', 'outside+frame'],
                         help='set a flat background color, ex. 000000')
