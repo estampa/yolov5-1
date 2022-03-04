@@ -118,6 +118,7 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
     draw_frame = render == 'all' or render == 'frame' or render == 'inside+frame' or render == 'outside+frame'
     draw_inside = render == 'all' or render == 'inside' or render == 'inside+frame'
     draw_outside = render == 'all' or render == 'outside' or render == 'outside+frame'
+    draw_box = render == 'none'
     bg_original = not opt.bg_color and not transparent
 
     # Run inference
@@ -194,7 +195,7 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                             f.write(('%g ' * len(line)).rstrip() % line + '\n')
 
                     if save_img or save_crop or view_img:  # Add bbox to image
-                        if draw_outside and not draw_inside:
+                        if (draw_outside and not draw_inside) or draw_box:
                             annotator.rectangle(xyxy, fill=fg_color)
                         if not draw_outside and draw_inside:
                             p1_x, p1_y, p2_x, p2_y = int(xyxy[0]), int(xyxy[1]), int(xyxy[2]), int(xyxy[3])
@@ -281,7 +282,7 @@ def parse_opt():
     parser.add_argument('--bg_color', type=str, default=None, help='set a flat background color, ex. 000000')
     parser.add_argument('--fg_color', type=str, default=None, help='set a detection color, ex. 000000')
     parser.add_argument('--transparent', action='store_true', help='set a transparent background')
-    parser.add_argument('--render', type=str, default='all', choices=['all', 'inside', 'outside', 'frame',
+    parser.add_argument('--render', type=str, default='all', choices=['all', 'none', 'inside', 'outside', 'frame',
                                                                       'inside+frame', 'outside+frame'],
                         help='set a flat background color, ex. 000000')
 
