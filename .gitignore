@@ -258,3 +258,6 @@ fabric.properties
 # virtual environment
 bin/
 pyvenv.cfg
+
+# Estampa
+names/
