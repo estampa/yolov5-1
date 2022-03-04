@@ -105,13 +105,18 @@ class Annotator:
                 scale = 0.75
                 tf = round(max((self.lw - 1)*scale*0.75, 1))  # font thickness
                 font_scale = (self.lw / 3)*scale
-                print(tf, font_scale)
+
+                margin_x = round(font_scale*2)
+                margin_y = round(font_scale*3)
+
                 w, h = cv2.getTextSize(label, 0, fontScale=font_scale, thickness=tf)[0]  # text width, height
                 outside = p1[1] - h - 3 >= 0  # label fits outside box
-                p2 = p1[0] + w, p1[1] - h - 3 if outside else p1[1] + h + 3
-                cv2.rectangle(self.im, p1, p2, color, thickness=self.lw, lineType=cv2.LINE_AA)  # frame to align box
+                p2 = p1[0] + w + 2 * margin_x, p1[1] - h - 3 - 2 * margin_y if outside else p1[1] + h + 3 + 2 * margin_y
+                cv2.rectangle(self.im, p1, p2, color, thickness=self.lw)  # frame to align box
                 cv2.rectangle(self.im, p1, p2, color, thickness=-1, lineType=cv2.LINE_AA)  # filled
-                cv2.putText(self.im, label, (p1[0], p1[1] - 2 if outside else p1[1] + h + 2), 0, font_scale, txt_color,
+                cv2.putText(self.im, label,
+                            (p1[0] + margin_x, p1[1] - 4 - margin_y if outside else p1[1] + h + 4 + margin_y),
+                            0, font_scale, txt_color,
                             thickness=tf, lineType=cv2.LINE_AA)
 
     def rectangle(self, xy, fill=None, outline=None, width=1):
