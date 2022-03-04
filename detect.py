@@ -119,7 +119,7 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
     draw_inside = render == 'all' or render == 'inside' or render == 'inside+frame'
     draw_outside = render == 'all' or render == 'outside' or render == 'outside+frame'
     draw_box = render == 'none'
-    bg_original = not opt.bg_color and not transparent
+    bg_original = draw_outside
 
     # Run inference
     model.warmup(imgsz=(1 if pt else bs, 3, *imgsz), half=half)  # warmup
