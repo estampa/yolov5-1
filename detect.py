@@ -159,16 +159,14 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                 p, frame = path, getattr(dataset, 'frame', 0)
                 if bg_color and bg_color != 'transparent':
                     im0 = np.zeros(im0s.shape, np.uint8)
-                    bg_color = [int(bg_color[i:i+2], 16) for i in (0, 2, 4)]
-                    im0[:, :] = bg_color
+                    im0[:, :] = [int(bg_color[i:i+2], 16) for i in (0, 2, 4)]
                 else:
                     im0 = np.zeros([im0s.shape[0], im0s.shape[1], 4], np.uint8)
-                    bg_color = [0, 0, 0, 0]
 
             if fg_color and fg_color != 'transparent' and fg_color != 'auto':
-                fg_color = [int(fg_color[i:i + 2], 16) for i in (0, 2, 4)]
+                curr_fg_color = [int(fg_color[i:i + 2], 16) for i in (0, 2, 4)]
             elif fg_color == 'transparent':
-                fg_color = [0, 0, 0, 0]
+                curr_fg_color = [0, 0, 0, 0]
 
             if transparent:
                 # Alpha channel
@@ -210,10 +208,10 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                             if fg_color == 'auto':
                                 color = colors(c, True)
                                 if transparent:
-                                    color = color(*color, 255)
+                                    color = (*color, 255)
                                 annotator.rectangle(xyxy, fill=color)
                             else:
-                                annotator.rectangle(xyxy, fill=fg_color)
+                                annotator.rectangle(xyxy, fill=curr_fg_color)
                         if not draw_outside and draw_inside:
                             p1_x, p1_y, p2_x, p2_y = int(xyxy[0]), int(xyxy[1]), int(xyxy[2]), int(xyxy[3])
                             im0[p1_y:p2_y, p1_x:p2_x] = im0s[p1_y:p2_y, p1_x:p2_x]
