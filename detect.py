@@ -75,8 +75,8 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         hide_conf=False,  # hide confidences
         half=False,  # use FP16 half-precision inference
         dnn=False,  # use OpenCV DNN for ONNX inference
-        bg_color=None,  # set a flat background color
-        fg_color=None,  # detection color
+        bg_color='ff00ff',  # set a flat background color
+        fg_color='ffff00',  # detection color
         render='all',  # what to render
         ):
     source = str(source)
@@ -294,8 +294,8 @@ def parse_opt():
     parser.add_argument('--half', action='store_true', help='use FP16 half-precision inference')
     parser.add_argument('--dnn', action='store_true', help='use OpenCV DNN for ONNX inference')
 
-    parser.add_argument('--bg_color', type=str, default=None, help='background color, ex. 000000 o transparent')
-    parser.add_argument('--fg_color', type=str, default=None, help='detection color, ex. 000000, transparent or auto')
+    parser.add_argument('--bg_color', type=str, default='ff00ff', help='background color, ex. 000000 o transparent')
+    parser.add_argument('--fg_color', type=str, default='ffff00', help='detection color, ex. 000000, transparent or auto')
     parser.add_argument('--render', type=str, default='all', choices=['all', 'none', 'inside', 'outside', 'frame',
                                                                       'inside+frame', 'outside+frame'],
                         help='set a flat background color, ex. 000000')
