@@ -84,6 +84,40 @@ class Annotator:
         self.lw = line_width or max(round(sum(im.shape) / 2 * 0.003), 2)  # line width
         self.transparent = transparent
 
+    def draw_text_psd_style(self, xy, text, txt_color, tracking=0, **kwargs):
+        """
+        usage: draw_text_psd_style(draw, (0, 0), "Test",
+                    tracking=-0.1, leading=32, fill="Blue")
+
+        Leading is measured from the baseline of one line of text to the
+        baseline of the line above it. Baseline is the invisible line on which most
+        letters—that is, those without descenders—sit. The default auto-leading
+        option sets the leading at 120% of the type size (for example, 12‑point
+        leading for 10‑point type).
+
+        Tracking is measured in 1/1000 em, a unit of measure that is relative to
+        the current type size. In a 6 point font, 1 em equals 6 points;
+        in a 10 point font, 1 em equals 10 points. Tracking
+        is strictly proportional to the current type size.
+        """
+
+        def stutter_chunk(lst, size, overlap=0, default=None):
+            for i in range(0, len(lst), size - overlap):
+                r = list(lst[i:i + size])
+                while len(r) < size:
+                    r.append(default)
+                yield r
+
+        x, y = xy
+        font_size = self.font.size
+        for a, b in stutter_chunk(text, 2, 1, ' '):
+            w = self.font.getlength(a + b) - self.font.getlength(b)
+            # dprint("[debug] kwargs")
+            # print("[debug] kwargs:{}".format(kwargs))
+
+            self.draw.text((x, y), a, font=self.font, fill=txt_color, **kwargs)
+            x += w + (tracking / 1000) * font_size
+
     def box_label(self, box, label='', color=(128, 128, 128), txt_color=(0, 0, 0)):
         if self.transparent:
             color = (*color, 255)
@@ -96,15 +130,20 @@ class Annotator:
                 margin_x = self.font_size / 4
                 margin_y = self.font_size / 4
 
+                tracking = 20
+
                 w, h = self.font.getsize(label)  # text width, height
+                w = int(w * (1 + tracking/320))  # Aproximació per l'espai extra afegit
                 outside = box[1] - h >= 0  # label fits outside box
                 self.draw.rectangle((box[0],
                                      box[1] - h - margin_y * 2 if outside else box[1],
                                      box[0] + w + 1 + margin_x * 2,
                                      box[1] + 1 if outside else box[1] + h + 1 + 2 * margin_x), fill=color)
                 # self.draw.text((box[0], box[1]), label, fill=txt_color, font=self.font, anchor='ls')  # for PIL>8.0
-                self.draw.text((box[0] + margin_x, box[1] - h - margin_y if outside else box[1]), label, fill=txt_color,
-                               font=self.font)
+                # self.draw.text((box[0] + margin_x, box[1] - h - margin_y if outside else box[1]), label, fill=txt_color,
+                #                font=self.font)
+                self.draw_text_psd_style((box[0] + margin_x, box[1] - h - margin_y if outside else box[1]), label,
+                                         txt_color=txt_color, tracking=tracking)
         else:  # cv2
             p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
             cv2.rectangle(self.im, p1, p2, color, thickness=self.lw, lineType=cv2.LINE_AA)
