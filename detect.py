@@ -184,7 +184,7 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
             s += '%gx%g ' % im.shape[2:]  # print string
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             imc = im0.copy() if save_crop else im0  # for save_crop
-            annotator = Annotator(im0, line_width=line_thickness, example=str(names), transparent=transparent, pil=True,
+            annotator = Annotator(im0, im0s, line_width=line_thickness, example=str(names), transparent=transparent, pil=True,
                                   font='./data/fonts/yolo.ttf')
             if len(det):
                 # Rescale boxes from img_size to im0 size
@@ -214,8 +214,7 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                             else:
                                 annotator.rectangle(xyxy, fill=curr_fg_color)
                         if not draw_outside and draw_inside:
-                            p1_x, p1_y, p2_x, p2_y = int(xyxy[0]), int(xyxy[1]), int(xyxy[2]), int(xyxy[3])
-                            im0[p1_y:p2_y, p1_x:p2_x] = im0s[p1_y:p2_y, p1_x:p2_x]
+                            annotator.copy_original(xyxy)
 
                 # Draw frame over everything
                 for *xyxy, conf, cls in reversed(det):
