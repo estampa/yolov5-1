@@ -159,12 +159,12 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                 p, frame = path, getattr(dataset, 'frame', 0)
                 if bg_color and bg_color != 'transparent':
                     im0 = np.zeros(im0s.shape, np.uint8)
-                    im0[:, :] = [int(bg_color[i:i+2], 16) for i in (0, 2, 4)]
+                    im0[:, :] = [int(bg_color[i:i+2], 16) for i in (4, 2, 0)]
                 else:
                     im0 = np.zeros([im0s.shape[0], im0s.shape[1], 4], np.uint8)
 
             if fg_color and fg_color != 'transparent' and fg_color != 'auto':
-                curr_fg_color = [int(fg_color[i:i + 2], 16) for i in (0, 2, 4)]
+                curr_fg_color = [int(fg_color[i:i + 2], 16) for i in (4, 2, 0)]
             elif fg_color == 'transparent':
                 curr_fg_color = [0, 0, 0, 0]
 
