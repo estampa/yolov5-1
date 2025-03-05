@@ -114,7 +114,7 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         dataset = LoadImages(source, img_size=imgsz, stride=stride, auto=pt)
         bs = 1  # batch_size
         # MPF
-        total_frames = dataset.frames if dataset.frames else dataset.nf
+        total_frames = dataset.frames if hasattr(dataset, 'frames') else dataset.nf
 
     vid_path, vid_writer = [None] * bs, [None] * bs
 
